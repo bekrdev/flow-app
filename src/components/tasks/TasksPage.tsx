@@ -4,7 +4,7 @@ import { useStore } from '@/stores/store'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TaskSheet } from './TaskSheet'
-import { haptic } from '@/lib/utils'
+import { haptic, shareFile } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { Task } from '@/types'
 import {
@@ -53,7 +53,7 @@ const customCollisionDetection: CollisionDetection = (args) => {
 }
 
 // CSV Export helper
-function exportTasksToCSV(tasks: Task[], columns: { id: string; title: string }[]) {
+async function exportTasksToCSV(tasks: Task[], columns: { id: string; title: string }[]) {
     const BOM = '\ufeff'
     const header = ['Título', 'Descripción', 'Estado', 'Color', 'Creada'].join(',')
 
@@ -69,13 +69,17 @@ function exportTasksToCSV(tasks: Task[], columns: { id: string; title: string }[
     })
 
     const csv = BOM + header + '\n' + rows.join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `flow-tareas-${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+    const file = new File([csv], `flow-tareas-${new Date().toISOString().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8;' })
+
+    const shared = await shareFile(file, 'Exportar Tareas', 'CSV de Tareas Flow')
+    if (!shared) {
+        const url = URL.createObjectURL(file)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = file.name
+        link.click()
+        URL.revokeObjectURL(url)
+    }
 }
 
 export function TasksPage() {

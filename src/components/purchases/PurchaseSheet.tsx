@@ -3,10 +3,9 @@ import { useStore } from '@/stores/store'
 import { Sheet } from '@/components/ui/Sheet'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Pill } from '@/components/ui/Pill'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Purchase, PurchaseType } from '@/types'
+import type { Purchase, PurchaseType, IndividualOffer } from '@/types'
 
 interface PurchaseSheetProps {
     open: boolean
@@ -18,68 +17,113 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
     const { addPurchase, updatePurchase } = useStore()
     const isEdit = !!purchase
 
-    // Essential fields always visible
+    // --- State ---
     const [type, setType] = useState<PurchaseType>('direct')
+    const [category, setCategory] = useState<'product' | 'service'>('product')
     const [description, setDescription] = useState('')
-    const [amount, setAmount] = useState<number | ''>('')
-    const [currency, setCurrency] = useState<'UYU' | 'USD'>('UYU')
-    const [requestNumber, setRequestNumber] = useState('')
 
-    // Extended fields - collapsible
-    const [showAdvanced, setShowAdvanced] = useState(false)
+    // Imputación
+    const [amount, setAmount] = useState<number | ''>('') // This will be calculated from unit * qty
+    const [currency, setCurrency] = useState<'UYU' | 'USD'>('UYU')
+    const [unitPrice, setUnitPrice] = useState<number | ''>('')
+    const [quantity, setQuantity] = useState<number>(1)
+    const [fundsStatus, setFundsStatus] = useState(false)
+
+    // Request & Order
+    const [requestNumber, setRequestNumber] = useState('')
     const [orderNumber, setOrderNumber] = useState('')
     const [investmentOrder, setInvestmentOrder] = useState('')
     const [invoice, setInvoice] = useState('')
-    const [notes, setNotes] = useState('')
 
-    // Checkboxes
-    const [fundsStatus, setFundsStatus] = useState(false)
-    const [liberationA, setLiberationA] = useState(false)
-    const [liberationB, setLiberationB] = useState(false)
+    // Direct Purchase Process
+    const [offerRequest, setOfferRequest] = useState('') // Petición Générica
+    const [offerReceptionDate, setOfferReceptionDate] = useState('')
     const [technicalStudy, setTechnicalStudy] = useState(false)
     const [sentToUCP, setSentToUCP] = useState(false)
+
+    // Multi-doc lists
+    const [individualOffers, setIndividualOffers] = useState<IndividualOffer[]>([])
+    const [newOfferCompany, setNewOfferCompany] = useState('')
+    const [newOfferNumber, setNewOfferNumber] = useState('')
+
+    const [acceptanceDocs, setAcceptanceDocs] = useState<string[]>([])
+    const [newAcceptanceDoc, setNewAcceptanceDoc] = useState('')
+
+    // Status / Checkboxes
+    const [liberationA, setLiberationA] = useState(false)
+    const [liberationB, setLiberationB] = useState(false)
     const [adjudication, setAdjudication] = useState(false)
     const [notification, setNotification] = useState(false)
 
+    const [notes, setNotes] = useState('')
+
+    // --- Effects ---
     useEffect(() => {
         if (purchase) {
             setType(purchase.type)
+            setCategory(purchase.category || 'product')
             setDescription(purchase.description)
             setAmount(purchase.amount || '')
             setCurrency(purchase.currency || 'UYU')
+            setUnitPrice(purchase.unitPrice || '')
+            setQuantity(purchase.quantity || 1)
+            setFundsStatus(purchase.fundsStatus || false)
+
             setRequestNumber(purchase.requestNumber || '')
             setOrderNumber(purchase.orderNumber || '')
             setInvestmentOrder(purchase.investmentOrder || '')
             setInvoice(purchase.invoice || '')
-            setNotes(purchase.notes || '')
-            setFundsStatus(purchase.fundsStatus || false)
-            setLiberationA(purchase.liberationA || false)
-            setLiberationB(purchase.liberationB || false)
+
+            setOfferRequest(purchase.offerRequest || '')
+            setOfferReceptionDate(purchase.offerReceptionDate || '')
             setTechnicalStudy(purchase.technicalStudy || false)
             setSentToUCP(purchase.sentToUCP || false)
+
+            setIndividualOffers(purchase.individualOfferRequests || [])
+            setAcceptanceDocs(purchase.acceptanceDocs || [])
+
+            setLiberationA(purchase.liberationA || false)
+            setLiberationB(purchase.liberationB || false)
             setAdjudication(purchase.adjudication || false)
             setNotification(purchase.notification || false)
-            setShowAdvanced(true) // Show advanced if editing
+            setNotes(purchase.notes || '')
         } else {
-            setType('direct')
-            setDescription('')
-            setAmount('')
-            setCurrency('UYU')
-            setRequestNumber('')
-            setOrderNumber('')
-            setInvestmentOrder('')
-            setInvoice('')
-            setNotes('')
-            setFundsStatus(false)
-            setLiberationA(false)
-            setLiberationB(false)
-            setTechnicalStudy(false)
-            setSentToUCP(false)
-            setAdjudication(false)
-            setNotification(false)
-            setShowAdvanced(false)
+            resetForm()
         }
     }, [purchase, open])
+
+    // Auto-calculate total amount
+    useEffect(() => {
+        if (unitPrice && quantity) {
+            setAmount(Number(unitPrice) * quantity)
+        }
+    }, [unitPrice, quantity])
+
+    const resetForm = () => {
+        setType('direct')
+        setCategory('product')
+        setDescription('')
+        setAmount('')
+        setCurrency('UYU')
+        setUnitPrice('')
+        setQuantity(1)
+        setFundsStatus(false)
+        setRequestNumber('')
+        setOrderNumber('')
+        setInvestmentOrder('')
+        setInvoice('')
+        setOfferRequest('')
+        setOfferReceptionDate('')
+        setTechnicalStudy(false)
+        setSentToUCP(false)
+        setIndividualOffers([])
+        setAcceptanceDocs([])
+        setLiberationA(false)
+        setLiberationB(false)
+        setAdjudication(false)
+        setNotification(false)
+        setNotes('')
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -91,14 +135,22 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
 
         const data: Omit<Purchase, 'id' | 'createdAt' | 'updatedAt'> = {
             type,
+            category,
             description: description.trim(),
             amount: amount ? Number(amount) : undefined,
             currency,
+            unitPrice: unitPrice ? Number(unitPrice) : undefined,
+            quantity,
             requestNumber: requestNumber.trim() || undefined,
             orderNumber: orderNumber.trim() || undefined,
             investmentOrder: investmentOrder.trim() || undefined,
             invoice: invoice.trim() || undefined,
+            offerRequest: offerRequest.trim() || undefined,
+            offerReceptionDate: offerReceptionDate || undefined,
+            individualOfferRequests: individualOffers,
+            acceptanceDocs: acceptanceDocs,
             notes: notes.trim() || undefined,
+
             fundsStatus,
             liberationA,
             liberationB,
@@ -115,185 +167,369 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
             addPurchase(data)
             toast.success('Compra registrada')
         }
-
         onClose()
     }
 
+    // --- Helpers for Lists ---
+    const addIndividualOffer = () => {
+        if (!newOfferCompany.trim()) return
+        const newOffer: IndividualOffer = {
+            id: crypto.randomUUID(),
+            company: newOfferCompany.trim(),
+            number: newOfferNumber.trim()
+        }
+        setIndividualOffers([...individualOffers, newOffer])
+        setNewOfferCompany('')
+        setNewOfferNumber('')
+    }
+
+    const removeIndividualOffer = (id: string) => {
+        setIndividualOffers(individualOffers.filter(o => o.id !== id))
+    }
+
+    const addAcceptanceDoc = () => {
+        if (!newAcceptanceDoc.trim()) return
+        setAcceptanceDocs([...acceptanceDocs, newAcceptanceDoc.trim()])
+        setNewAcceptanceDoc('')
+    }
+
+    const removeAcceptanceDoc = (index: number) => {
+        setAcceptanceDocs(acceptanceDocs.filter((_, i) => i !== index))
+    }
+
+    const getStageLabel = () => {
+        // Simple logic to show current stage text
+        if (invoice) return 'Facturado'
+        if (acceptanceDocs.length > 0) return 'Aceptación'
+        if (notification) return 'Notificado'
+        if (adjudication) return 'Adjudicado'
+        if (orderNumber) return 'Con Pedido'
+        if (sentToUCP) return 'En UGP'
+        if (technicalStudy) return 'Estudio Técnico'
+        if (individualOffers.length > 0 || offerReceptionDate) return 'Ofertas'
+        if (offerRequest) return 'Petición Oferta'
+        if (requestNumber) return 'Solicitado'
+        return 'Inicio: Sin datos'
+    }
+
     return (
-        <Sheet open={open} onClose={onClose} title={isEdit ? 'Editar Compra' : 'Nueva Compra'}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Type */}
-                <div>
-                    <label className="text-small text-text-secondary mb-2 block">Tipo</label>
-                    <div className="flex gap-2">
-                        <Pill
-                            active={type === 'direct'}
-                            onClick={() => setType('direct')}
-                            className="flex-1 justify-center"
+        <Sheet open={open} onClose={onClose} title={isEdit ? 'Editar Compra' : 'Registrar Compra SAP'}>
+            <form onSubmit={handleSubmit} className="space-y-6 pb-safe">
+                {/* 1. Tipo & Categoria */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="label">Tipo de Compra</label>
+                        <select
+                            className="input w-full"
+                            value={type}
+                            onChange={(e) => setType(e.target.value as PurchaseType)}
                         >
-                            Compra Directa
-                        </Pill>
-                        <Pill
-                            active={type === 'warehouse'}
-                            onClick={() => setType('warehouse')}
-                            className="flex-1 justify-center"
+                            <option value="direct">Compra Directa</option>
+                            <option value="warehouse">Almacén</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="label">Categoría</label>
+                        <select
+                            className="input w-full"
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value as any)}
                         >
-                            Almacén
-                        </Pill>
+                            <option value="product">Producto</option>
+                            <option value="service">Servicio</option>
+                        </select>
                     </div>
                 </div>
 
-                {/* Description */}
+                {/* 2. Objeto */}
                 <div>
-                    <label className="text-small text-text-secondary mb-1 block">
-                        Descripción *
-                    </label>
+                    <label className="label">Objeto (Descripción)</label>
                     <Input
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Ej: Compra de materiales oficina"
+                        placeholder="Ej: Toner Pantum"
                         required
                     />
                 </div>
 
-                {/* Amount & Currency */}
-                <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2">
-                        <label className="text-small text-text-secondary mb-1 block">Monto</label>
+                {/* 3. Etapa Actual (Read Only) */}
+                <div>
+                    <label className="label text-accent">Etapa Actual</label>
+                    <div className="input bg-accent/5 border-accent/20 text-accent font-medium flex items-center">
+                        {getStageLabel()}
+                    </div>
+                </div>
+
+                {/* 4. Imputación */}
+                <div className="card p-3 space-y-3 border-border-subtle bg-bg-secondary/30">
+                    <h3 className="section-title">Imputación</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="label">Moneda</label>
+                            <select
+                                className="input w-full"
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value as any)}
+                            >
+                                <option value="UYU">UYU</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="label">Precio Unitario</label>
+                            <Input
+                                type="number"
+                                value={unitPrice}
+                                onChange={(e) => setUnitPrice(e.target.value ? Number(e.target.value) : '')}
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="label">Cantidad</label>
+                            <Input
+                                type="number"
+                                value={quantity}
+                                onChange={(e) => setQuantity(Number(e.target.value))}
+                            />
+                        </div>
+                        <div>
+                            <label className="label">Total</label>
+                            <div className="input bg-bg-secondary text-text-muted flex items-center">
+                                {amount ? amount.toLocaleString() : '0'}
+                            </div>
+                        </div>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={fundsStatus}
+                            onChange={(e) => setFundsStatus(e.target.checked)}
+                            className="checkbox"
+                        />
+                        <span className="text-sm">Fondos Imputados</span>
+                    </label>
+                </div>
+
+                {/* 5. Solicitud & OI */}
+                <div className="space-y-3">
+                    <div>
+                        <label className="label">Solicitud Pedido</label>
                         <Input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value ? Number(e.target.value) : '')}
-                            placeholder="0"
+                            value={requestNumber}
+                            onChange={(e) => setRequestNumber(e.target.value)}
+                            placeholder="Nº Solicitud"
                         />
                     </div>
                     <div>
-                        <label className="text-small text-text-secondary mb-1 block">Moneda</label>
-                        <div className="flex gap-1">
-                            <button
-                                type="button"
-                                onClick={() => setCurrency('UYU')}
-                                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${currency === 'UYU' ? 'bg-accent text-text-inverse' : 'bg-bg-glass text-text-secondary'
-                                    }`}
-                            >
-                                UYU
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setCurrency('USD')}
-                                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${currency === 'USD' ? 'bg-accent text-text-inverse' : 'bg-bg-glass text-text-secondary'
-                                    }`}
-                            >
-                                USD
-                            </button>
-                        </div>
+                        <label className="label">Orden de Inversión</label>
+                        <Input
+                            value={investmentOrder}
+                            onChange={(e) => setInvestmentOrder(e.target.value)}
+                            placeholder="Opcional"
+                        />
                     </div>
                 </div>
 
-                {/* Request Number */}
-                <div>
-                    <label className="text-small text-text-secondary mb-1 block">
-                        Nº Solicitud/Reserva
-                    </label>
-                    <Input
-                        value={requestNumber}
-                        onChange={(e) => setRequestNumber(e.target.value)}
-                        placeholder="Ej: 10001234"
-                    />
-                </div>
-
-                {/* Advanced Fields Toggle */}
-                <button
-                    type="button"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="w-full py-2 flex items-center justify-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
-                >
-                    {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    {showAdvanced ? 'Menos campos' : 'Más campos'}
-                </button>
-
-                {/* Advanced Fields */}
-                {showAdvanced && (
-                    <div className="space-y-4 pt-2 border-t border-border-subtle animate-fade-in">
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="text-small text-text-secondary mb-1 block">Nº Pedido</label>
-                                <Input
-                                    value={orderNumber}
-                                    onChange={(e) => setOrderNumber(e.target.value)}
+                {/* 6. Proceso de Ofertas (Solo Directa) */}
+                {type === 'direct' && (
+                    <div className="card p-3 space-y-4 border-border-subtle bg-bg-secondary/30">
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={liberationA}
+                                    onChange={(e) => setLiberationA(e.target.checked)}
+                                    className="checkbox"
                                 />
-                            </div>
-                            <div>
-                                <label className="text-small text-text-secondary mb-1 block">Orden Inversión</label>
-                                <Input
-                                    value={investmentOrder}
-                                    onChange={(e) => setInvestmentOrder(e.target.value)}
+                                <span className="text-sm">Liberación A</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={liberationB}
+                                    onChange={(e) => setLiberationB(e.target.checked)}
+                                    className="checkbox"
                                 />
-                            </div>
+                                <span className="text-sm">Liberación B</span>
+                            </label>
                         </div>
 
                         <div>
-                            <label className="text-small text-text-secondary mb-1 block">Factura</label>
+                            <label className="label">Petición Oferta Genérica</label>
                             <Input
-                                value={invoice}
-                                onChange={(e) => setInvoice(e.target.value)}
+                                value={offerRequest}
+                                onChange={(e) => setOfferRequest(e.target.value)}
                             />
                         </div>
 
-                        {/* Checkboxes */}
-                        {type === 'direct' && (
-                            <div className="space-y-2">
-                                <label className="text-small text-text-secondary block">Estado</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[
-                                        { label: 'Fondos', value: fundsStatus, set: setFundsStatus },
-                                        { label: 'Liberación A', value: liberationA, set: setLiberationA },
-                                        { label: 'Liberación B', value: liberationB, set: setLiberationB },
-                                        { label: 'Est. Técnico', value: technicalStudy, set: setTechnicalStudy },
-                                        { label: 'Enviado UGP', value: sentToUCP, set: setSentToUCP },
-                                        { label: 'Adjudicación', value: adjudication, set: setAdjudication },
-                                        { label: 'Notificación', value: notification, set: setNotification },
-                                    ].map(({ label, value, set }) => (
-                                        <label
-                                            key={label}
-                                            className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${value ? 'bg-accent-subtle text-accent' : 'bg-bg-glass text-text-secondary'
-                                                }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={value}
-                                                onChange={(e) => set(e.target.checked)}
-                                                className="sr-only"
-                                            />
-                                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${value ? 'bg-accent border-accent' : 'border-border-subtle'
-                                                }`}>
-                                                {value && <span className="text-text-inverse text-xs">✓</span>}
-                                            </div>
-                                            <span className="text-sm">{label}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         <div>
-                            <label className="text-small text-text-secondary mb-1 block">Notas</label>
-                            <textarea
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                className="input min-h-[60px] resize-none"
+                            <label className="label">Recepción Ofertas</label>
+                            <Input
+                                type="date"
+                                value={offerReceptionDate}
+                                onChange={(e) => setOfferReceptionDate(e.target.value)}
                             />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={technicalStudy}
+                                    onChange={(e) => setTechnicalStudy(e.target.checked)}
+                                    className="checkbox"
+                                />
+                                <span className="text-sm">Estudio Técnico</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={sentToUCP}
+                                    onChange={(e) => setSentToUCP(e.target.checked)}
+                                    className="checkbox"
+                                />
+                                <span className="text-sm">Enviado a UGP?</span>
+                            </label>
+                        </div>
+
+                        {/* Peticiones Individuales */}
+                        <div className="border-t border-border-subtle pt-3">
+                            <label className="label mb-2 block">Peticiones de Oferta Individuales</label>
+                            <div className="space-y-2 mb-3">
+                                {individualOffers.map((offer) => (
+                                    <div key={offer.id} className="flex items-center justify-between text-sm bg-bg-glass p-2 rounded border border-border-subtle">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{offer.company}</span>
+                                            <span className="text-xs text-text-muted">{offer.number}</span>
+                                        </div>
+                                        <button type="button" onClick={() => removeIndividualOffer(offer.id)} className="text-danger p-1">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Empresa"
+                                    value={newOfferCompany}
+                                    onChange={(e) => setNewOfferCompany(e.target.value)}
+                                    className="flex-[2]"
+                                />
+                                <Input
+                                    placeholder="Nº"
+                                    value={newOfferNumber}
+                                    onChange={(e) => setNewOfferNumber(e.target.value)}
+                                    className="flex-1"
+                                />
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    onClick={addIndividualOffer}
+                                    disabled={!newOfferCompany.trim()}
+                                >
+                                    <Plus size={18} />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex gap-3 pt-2">
+                {/* 7. Pedido y Adjudicación */}
+                <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4 items-end">
+                        <div className="col-span-1">
+                            <label className="label">Pedido</label>
+                            <Input
+                                value={orderNumber}
+                                onChange={(e) => setOrderNumber(e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-1 space-y-2 pb-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={adjudication}
+                                    onChange={(e) => setAdjudication(e.target.checked)}
+                                    className="checkbox"
+                                />
+                                <span className="text-sm">Adjudicación</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={notification}
+                                    onChange={(e) => setNotification(e.target.checked)}
+                                    className="checkbox"
+                                />
+                                <span className="text-sm">Notificación</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 8. Aceptación / Recepción */}
+                <div className="card p-3 border-border-subtle bg-bg-secondary/30">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="label mb-0">Aceptación / Recepción</label>
+                    </div>
+
+                    <div className="space-y-2 mb-3">
+                        {acceptanceDocs.length === 0 && (
+                            <p className="text-xs text-text-muted italic">Sin documentos de aceptación</p>
+                        )}
+                        {acceptanceDocs.map((doc, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm bg-bg-glass p-2 rounded border border-border-subtle">
+                                <span>{doc}</span>
+                                <button type="button" onClick={() => removeAcceptanceDoc(i)} className="text-danger p-1">
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Input
+                            placeholder="Documento / Nota"
+                            value={newAcceptanceDoc}
+                            onChange={(e) => setNewAcceptanceDoc(e.target.value)}
+                        />
+                        <Button
+                            type="button"
+                            size="icon"
+                            onClick={addAcceptanceDoc}
+                            disabled={!newAcceptanceDoc.trim()}
+                        >
+                            <Plus size={18} />
+                        </Button>
+                    </div>
+                </div>
+
+                {/* 9. Factura y Notas */}
+                <div>
+                    <label className="label">Factura</label>
+                    <Input
+                        value={invoice}
+                        onChange={(e) => setInvoice(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label className="label">Notas</label>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="input w-full min-h-[80px] py-2 resize-none"
+                    />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 pt-4 sticky bottom-0 bg-bg-elevated/95 backdrop-blur-sm p-4 -mx-4 border-t border-border-subtle">
                     <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
                         Cancelar
                     </Button>
                     <Button type="submit" className="flex-1">
-                        {isEdit ? 'Guardar' : 'Registrar'}
+                        Guardar
                     </Button>
                 </div>
             </form>

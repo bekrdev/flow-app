@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/Button'
 import { Pill } from '@/components/ui/Pill'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ItemSheet } from './ItemSheet'
-import { haptic, debounce } from '@/lib/utils'
+import { haptic, debounce, shareFile } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { Item } from '@/types'
 
 // CSV Export helper
-function exportItemsToCSV(items: Item[]) {
+async function exportItemsToCSV(items: Item[]) {
     const BOM = '\ufeff'
     const header = ['Nombre', 'Cantidad', 'Categoría', 'Ubicación', 'Notas', 'Creada'].join(',')
 
@@ -25,13 +25,17 @@ function exportItemsToCSV(items: Item[]) {
     ].join(','))
 
     const csv = BOM + header + '\n' + rows.join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `flow-inventario-${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+    const file = new File([csv], `flow-inventario-${new Date().toISOString().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8;' })
+
+    const shared = await shareFile(file, 'Exportar Inventario', 'CSV de Inventario Flow')
+    if (!shared) {
+        const url = URL.createObjectURL(file)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = file.name
+        link.click()
+        URL.revokeObjectURL(url)
+    }
 }
 
 export function InventoryPage() {

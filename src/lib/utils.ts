@@ -90,3 +90,26 @@ export function readFile(file: File): Promise<string> {
         reader.readAsText(file)
     })
 }
+/** Share file using native API */
+export async function shareFile(file: File, title: string, text: string): Promise<boolean> {
+    if (
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+    ) {
+        try {
+            await navigator.share({
+                files: [file],
+                title,
+                text
+            })
+            return true
+        } catch (error) {
+            // User cancelled or error
+            if ((error as Error).name !== 'AbortError') {
+                console.error('Share failed', error)
+            }
+            return false
+        }
+    }
+    return false // Not supported
+}
