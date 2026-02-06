@@ -17,7 +17,8 @@ export default defineConfig({
                 background_color: '#0a0f1c',
                 display: 'standalone',
                 orientation: 'portrait',
-                start_url: '/',
+                scope: '/flow-app/',
+                start_url: '/flow-app/',
                 icons: [
                     {
                         src: 'pwa-192x192.png',
