@@ -3,8 +3,8 @@ import { Package, CheckSquare, ShoppingCart, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const tabs = [
-    { path: '/inventory', label: 'Inventario', icon: Package },
     { path: '/tasks', label: 'Tareas', icon: CheckSquare },
+    { path: '/inventory', label: 'Inventario', icon: Package },
     { path: '/purchases', label: 'Compras', icon: ShoppingCart },
     { path: '/settings', label: 'Ajustes', icon: Settings },
 ]

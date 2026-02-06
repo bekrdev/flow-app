@@ -453,12 +453,21 @@ a {
     justify-content: center;
     width: 32px;
     height: 32px;
+    padding: 0;
     background: var(--bg-glass);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
+    line-height: 0;
+}
+
+.item-action-btn svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex-shrink: 0;
 }
 
 .item-action-btn:hover {
@@ -527,13 +536,15 @@ a {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-width: 64px;
+    flex: 1;
     height: var(--tabbar-height);
+    padding: 0;
     color: var(--text-muted);
     font-size: 0.6875rem;
     font-weight: 500;
     text-decoration: none;
     transition: color var(--transition-fast);
+    line-height: 1;
 }
 
 .tab-item.active {
@@ -543,6 +554,8 @@ a {
 .tab-item svg {
     width: 22px;
     height: 22px;
+    display: block;
+    flex-shrink: 0;
 }
 
 /* ========================================

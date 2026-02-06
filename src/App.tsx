@@ -1,17 +1,18 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { TabBar } from '@/components/ui/TabBar'
 import { InventoryPage } from '@/components/inventory/InventoryPage'
 import { TasksPage } from '@/components/tasks/TasksPage'
 import { PurchasesPage } from '@/components/purchases/PurchasesPage'
 import { SettingsPage } from '@/components/SettingsPage'
+import { WelcomePage } from '@/components/WelcomePage'
 
 export default function App() {
     return (
         <div className="min-h-screen min-h-dvh flex flex-col bg-background">
             {/* Main Content */}
             <Routes>
-                <Route path="/" element={<Navigate to="/inventory" replace />} />
+                <Route path="/" element={<WelcomePage />} />
                 <Route path="/inventory" element={<InventoryPage />} />
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/purchases" element={<PurchasesPage />} />

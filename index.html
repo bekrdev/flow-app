@@ -18,6 +18,16 @@
 </head>
 
 <body>
+  <script>
+    // Handle SPA redirects from 404.html
+    (function () {
+      const redirect = sessionStorage.getItem('redirect');
+      if (redirect) {
+        sessionStorage.removeItem('redirect');
+        window.history.replaceState(null, '', redirect);
+      }
+    })();
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
