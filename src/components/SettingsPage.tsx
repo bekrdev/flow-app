@@ -2,19 +2,24 @@ import { useRef } from 'react'
 import { useStore } from '@/stores/store'
 import { Button } from '@/components/ui/Button'
 import { Download, Upload, Trash2, Info } from 'lucide-react'
-import { downloadFile, readFile, haptic } from '@/lib/utils'
+import { downloadFile, readFile, haptic, shareFile } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export function SettingsPage() {
     const { items, tasks, purchases, exportData, importData } = useStore()
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const handleExport = () => {
+    const handleExport = async () => {
         haptic('light')
         const data = exportData()
         const filename = `flow-backup-${new Date().toISOString().split('T')[0]}.json`
-        downloadFile(filename, data, 'application/json')
-        toast.success('Backup exportado')
+        const file = new File([data], filename, { type: 'application/json' })
+
+        const shared = await shareFile(file, 'Copia de Seguridad Flow', 'Archivo de respaldo JSON')
+        if (!shared) {
+            downloadFile(filename, data, 'application/json')
+        }
+        toast.success('Backup generado')
     }
 
     const handleImportClick = () => {
@@ -162,7 +167,7 @@ export function SettingsPage() {
 
                 {/* App Info */}
                 <div className="text-center text-caption text-text-muted py-4">
-                    <p>Flow v1.0.1</p>
+                    <p>Flow v1.0.2</p>
                     <p className="mt-1">Developed by bekr</p>
                 </div>
             </div>
