@@ -162,7 +162,7 @@ export function SettingsPage() {
 
                 {/* App Info */}
                 <div className="text-center text-caption text-text-muted py-4">
-                    <p>Flow v1.0</p>
+                    <p>Flow v1.0.1</p>
                     <p className="mt-1">Developed by bekr</p>
                 </div>
             </div>
