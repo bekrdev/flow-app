@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Package, CheckSquare, ShoppingCart, Settings } from 'lucide-react'
 
 export function WelcomePage() {
@@ -30,22 +31,22 @@ export function WelcomePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-8 opacity-0 animate-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-forwards">
-                <div className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
+                <Link to="/tasks" className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
                     <CheckSquare size={24} className="mb-1 opacity-70" />
                     <span className="text-xs">Tareas</span>
-                </div>
-                <div className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
+                </Link>
+                <Link to="/inventory" className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
                     <Package size={24} className="mb-1 opacity-70" />
                     <span className="text-xs">Inventario</span>
-                </div>
-                <div className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
+                </Link>
+                <Link to="/purchases" className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
                     <ShoppingCart size={24} className="mb-1 opacity-70" />
                     <span className="text-xs">Compras</span>
-                </div>
-                <div className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
+                </Link>
+                <Link to="/settings" className="glass-card p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:bg-bg-elevated/50 transition-colors">
                     <Settings size={24} className="mb-1 opacity-70" />
                     <span className="text-xs">Ajustes</span>
-                </div>
+                </Link>
             </div>
         </div>
     )
