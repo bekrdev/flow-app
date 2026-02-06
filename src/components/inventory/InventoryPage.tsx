@@ -25,7 +25,7 @@ async function exportItemsToCSV(items: Item[]) {
     ].join(','))
 
     const csv = BOM + header + '\n' + rows.join('\n')
-    const file = new File([csv], `flow-inventario-${new Date().toISOString().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8;' })
+    const file = new File([csv], `flow-inventario-${new Date().toISOString().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8' })
 
     const shared = await shareFile(file, 'Exportar Inventario', 'CSV de Inventario Flow')
     if (!shared) {

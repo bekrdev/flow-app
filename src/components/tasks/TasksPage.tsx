@@ -69,7 +69,7 @@ async function exportTasksToCSV(tasks: Task[], columns: { id: string; title: str
     })
 
     const csv = BOM + header + '\n' + rows.join('\n')
-    const file = new File([csv], `flow-tareas-${new Date().toISOString().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8;' })
+    const file = new File([csv], `flow-tareas-${new Date().toISOString().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8' })
 
     const shared = await shareFile(file, 'Exportar Tareas', 'CSV de Tareas Flow')
     if (!shared) {

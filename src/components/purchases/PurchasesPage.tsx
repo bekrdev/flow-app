@@ -54,7 +54,7 @@ async function exportPurchasesToCSV(purchases: Purchase[]) {
     })
 
     const csv = BOM + header + '\n' + rows.join('\n')
-    const file = new File([csv], `flow-compras-${now().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8;' })
+    const file = new File([csv], `flow-compras-${now().split('T')[0]}.csv`, { type: 'text/csv;charset=utf-8' })
 
     const shared = await shareFile(file, 'Exportar Compras', 'CSV de Compras Flow')
     if (!shared) {
