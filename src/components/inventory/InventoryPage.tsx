@@ -60,7 +60,8 @@ export function InventoryPage() {
             const matchesSearch = !search ||
                 item.name.toLowerCase().includes(search.toLowerCase()) ||
                 item.category?.toLowerCase().includes(search.toLowerCase()) ||
-                item.location?.toLowerCase().includes(search.toLowerCase())
+                item.location?.toLowerCase().includes(search.toLowerCase()) ||
+                item.notes?.toLowerCase().includes(search.toLowerCase())
 
             const matchesCategory = !activeCategory || item.category === activeCategory
 

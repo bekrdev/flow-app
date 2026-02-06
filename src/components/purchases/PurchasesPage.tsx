@@ -18,11 +18,12 @@ async function exportPurchasesToCSV(purchases: Purchase[]) {
         'Solicitud', 'OI', 'Pedido', 'Factura',
         'Fondos', 'Lib A', 'Lib B', 'Pet. Oferta', 'Rec. Ofertas',
         'Est. Téc', 'UGP', 'Adjudicado', 'Notificado',
-        'Ofertas Ind.', 'Docs Acept.', 'Notas', 'Creada'
+        'Ofertas Ind.', 'Hojas Servicio', 'Docs Acept.', 'Notas', 'Creada'
     ].join(',')
 
     const rows = purchases.map(p => {
         const individualOffers = (p.individualOfferRequests || []).map(o => `${o.company} (${o.number})`).join('; ')
+        const serviceSheets = (p.serviceSheets || []).join('; ')
         const acceptanceDocs = (p.acceptanceDocs || []).join('; ')
 
         return [
@@ -47,6 +48,7 @@ async function exportPurchasesToCSV(purchases: Purchase[]) {
             p.adjudication ? 'SI' : 'NO',
             p.notification ? 'SI' : 'NO',
             `"${individualOffers.replace(/"/g, '""')}"`,
+            `"${serviceSheets.replace(/"/g, '""')}"`,
             `"${acceptanceDocs.replace(/"/g, '""')}"`,
             `"${(p.notes || '').replace(/"/g, '""')}"`,
             `"${new Date(p.createdAt).toLocaleDateString('es-UY')}"`,
