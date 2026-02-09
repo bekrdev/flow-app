@@ -23,10 +23,10 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
     const [description, setDescription] = useState('')
 
     // Imputación
-    const [amount, setAmount] = useState<number | ''>('') // This will be calculated from unit * qty
+    const [amount, setAmount] = useState<number | ''>('')
     const [currency, setCurrency] = useState<'UYU' | 'USD'>('UYU')
     const [unitPrice, setUnitPrice] = useState<number | ''>('')
-    const [quantity, setQuantity] = useState<number>(1)
+    const [quantity, setQuantity] = useState<number | ''>('') // Default empty
     const [fundsStatus, setFundsStatus] = useState(false)
 
     // Request & Order
@@ -36,7 +36,7 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
     const [invoice, setInvoice] = useState('')
 
     // Direct Purchase Process
-    const [offerRequest, setOfferRequest] = useState('') // Petición Générica
+    const [offerRequest, setOfferRequest] = useState('')
     const [offerReceptionDate, setOfferReceptionDate] = useState('')
     const [technicalStudy, setTechnicalStudy] = useState(false)
     const [sentToUCP, setSentToUCP] = useState(false)
@@ -45,6 +45,7 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
     const [individualOffers, setIndividualOffers] = useState<IndividualOffer[]>([])
     const [newOfferCompany, setNewOfferCompany] = useState('')
     const [newOfferNumber, setNewOfferNumber] = useState('')
+    const [editingOfferId, setEditingOfferId] = useState<string | null>(null) // Track editing
 
     const [acceptanceDocs, setAcceptanceDocs] = useState<string[]>([])
     const [newAcceptanceDoc, setNewAcceptanceDoc] = useState('')
@@ -66,7 +67,7 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
             setAmount(purchase.amount || '')
             setCurrency(purchase.currency || 'UYU')
             setUnitPrice(purchase.unitPrice || '')
-            setQuantity(purchase.quantity || 1)
+            setQuantity(purchase.quantity || '') // Default empty if 0/undefined
             setFundsStatus(purchase.fundsStatus || false)
 
             setRequestNumber(purchase.requestNumber || '')
@@ -95,7 +96,7 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
     // Auto-calculate total amount
     useEffect(() => {
         if (unitPrice && quantity) {
-            setAmount(Number(unitPrice) * quantity)
+            setAmount(Number(unitPrice) * Number(quantity))
         }
     }, [unitPrice, quantity])
 
@@ -106,7 +107,7 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
         setAmount('')
         setCurrency('UYU')
         setUnitPrice('')
-        setQuantity(1)
+        setQuantity('')
         setFundsStatus(false)
         setRequestNumber('')
         setOrderNumber('')
@@ -123,6 +124,9 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
         setAdjudication(false)
         setNotification(false)
         setNotes('')
+        setEditingOfferId(null)
+        setNewOfferCompany('')
+        setNewOfferNumber('')
     }
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -140,7 +144,7 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
             amount: amount ? Number(amount) : undefined,
             currency,
             unitPrice: unitPrice ? Number(unitPrice) : undefined,
-            quantity,
+            quantity: quantity ? Number(quantity) : undefined,
             requestNumber: requestNumber.trim() || undefined,
             orderNumber: orderNumber.trim() || undefined,
             investmentOrder: investmentOrder.trim() || undefined,
@@ -171,19 +175,45 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
     }
 
     // --- Helpers for Lists ---
-    const addIndividualOffer = () => {
+    const handleSaveOffer = () => {
         if (!newOfferCompany.trim()) return
-        const newOffer: IndividualOffer = {
-            id: crypto.randomUUID(),
-            company: newOfferCompany.trim(),
-            number: newOfferNumber.trim()
+
+        if (editingOfferId) {
+            // Update existing
+            setIndividualOffers(individualOffers.map(o =>
+                o.id === editingOfferId
+                    ? { ...o, company: newOfferCompany.trim(), number: newOfferNumber.trim() }
+                    : o
+            ))
+            toast.success('Oferta actualizada')
+        } else {
+            // Add new
+            const newOffer: IndividualOffer = {
+                id: crypto.randomUUID(),
+                company: newOfferCompany.trim(),
+                number: newOfferNumber.trim()
+            }
+            setIndividualOffers([...individualOffers, newOffer])
         }
-        setIndividualOffers([...individualOffers, newOffer])
+
+        // Reset
         setNewOfferCompany('')
         setNewOfferNumber('')
+        setEditingOfferId(null)
+    }
+
+    const handleEditOffer = (offer: IndividualOffer) => {
+        setNewOfferCompany(offer.company)
+        setNewOfferNumber(offer.number)
+        setEditingOfferId(offer.id)
     }
 
     const removeIndividualOffer = (id: string) => {
+        if (editingOfferId === id) {
+            setNewOfferCompany('')
+            setNewOfferNumber('')
+            setEditingOfferId(null)
+        }
         setIndividualOffers(individualOffers.filter(o => o.id !== id))
     }
 
@@ -291,13 +321,14 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
                             <Input
                                 type="number"
                                 value={quantity}
-                                onChange={(e) => setQuantity(Number(e.target.value))}
+                                onChange={(e) => setQuantity(e.target.value ? Number(e.target.value) : '')}
+                                placeholder="1"
                             />
                         </div>
                         <div>
                             <label className="label">Total</label>
                             <div className="input bg-bg-secondary text-text-muted flex items-center">
-                                {amount ? amount.toLocaleString() : '0'}
+                                {amount ? amount.toLocaleString() : '-'}
                             </div>
                         </div>
                     </div>
@@ -399,12 +430,25 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
                             <label className="label mb-2 block">Peticiones de Oferta Individuales</label>
                             <div className="space-y-2 mb-3">
                                 {individualOffers.map((offer) => (
-                                    <div key={offer.id} className="flex items-center justify-between text-sm bg-bg-glass p-2 rounded border border-border-subtle">
-                                        <div className="flex flex-col">
+                                    <div
+                                        key={offer.id}
+                                        className={`flex items-center justify-between text-sm p-2 rounded border transition-colors ${editingOfferId === offer.id
+                                            ? 'bg-accent/10 border-accent/30'
+                                            : 'bg-bg-glass border-border-subtle'
+                                            }`}
+                                    >
+                                        <div
+                                            className="flex flex-col flex-1 cursor-pointer"
+                                            onClick={() => handleEditOffer(offer)}
+                                        >
                                             <span className="font-medium">{offer.company}</span>
                                             <span className="text-xs text-text-muted">{offer.number}</span>
                                         </div>
-                                        <button type="button" onClick={() => removeIndividualOffer(offer.id)} className="text-danger p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeIndividualOffer(offer.id)}
+                                            className="text-danger p-2 -mr-2"
+                                        >
                                             <X size={14} />
                                         </button>
                                     </div>
@@ -426,10 +470,12 @@ export function PurchaseSheet({ open, onClose, purchase }: PurchaseSheetProps) {
                                 <Button
                                     type="button"
                                     size="icon"
-                                    onClick={addIndividualOffer}
+                                    variant={editingOfferId ? "primary" : "secondary"}
+                                    onClick={handleSaveOffer}
                                     disabled={!newOfferCompany.trim()}
                                 >
-                                    <Plus size={18} />
+                                    <Plus size={18} className={editingOfferId ? "hidden" : ""} />
+                                    <span className={editingOfferId ? "text-xs font-bold" : "hidden"}>OK</span>
                                 </Button>
                             </div>
                         </div>

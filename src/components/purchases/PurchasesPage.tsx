@@ -320,7 +320,7 @@ export function PurchasesPage() {
                                                     <div className="flex flex-wrap gap-1">
                                                         {purchase.individualOfferRequests.map(o => (
                                                             <span key={o.id} className="text-xs bg-bg-glass border border-border-subtle px-2 py-1 rounded">
-                                                                {o.company}
+                                                                {o.company} <span className="text-text-muted">({o.number})</span>
                                                             </span>
                                                         ))}
                                                     </div>
