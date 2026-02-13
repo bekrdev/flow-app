@@ -20,6 +20,8 @@ export function ItemSheet({ open, onClose, item }: ItemSheetProps) {
     const [quantity, setQuantity] = useState(0)
     const [category, setCategory] = useState('')
     const [location, setLocation] = useState('')
+    const [minStockWarning, setMinStockWarning] = useState<string>('')
+    const [minStockCritical, setMinStockCritical] = useState<string>('1')
     const [notes, setNotes] = useState('')
 
     // Reset form when item changes
@@ -29,12 +31,16 @@ export function ItemSheet({ open, onClose, item }: ItemSheetProps) {
             setQuantity(item.quantity)
             setCategory(item.category || '')
             setLocation(item.location || '')
+            setMinStockWarning(item.minStockWarning?.toString() || '')
+            setMinStockCritical(item.minStockCritical?.toString() || '1')
             setNotes(item.notes || '')
         } else {
             setName('')
             setQuantity(0)
             setCategory('')
             setLocation('')
+            setMinStockWarning('')
+            setMinStockCritical('1')
             setNotes('')
         }
     }, [item, open])
@@ -52,6 +58,8 @@ export function ItemSheet({ open, onClose, item }: ItemSheetProps) {
             quantity: Number(quantity),
             category: category.trim() || undefined,
             location: location.trim() || undefined,
+            minStockWarning: minStockWarning ? Number(minStockWarning) : undefined,
+            minStockCritical: minStockCritical ? Number(minStockCritical) : undefined,
             notes: notes.trim() || undefined,
         }
 
@@ -120,6 +128,34 @@ export function ItemSheet({ open, onClose, item }: ItemSheetProps) {
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             placeholder="Ej: Estante A1"
+                        />
+                    </div>
+                </div>
+
+                {/* Stock Thresholds */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="text-small text-text-secondary mb-1 block">
+                            Advertencia (Amarillo)
+                        </label>
+                        <Input
+                            type="number"
+                            value={minStockWarning}
+                            onChange={(e) => setMinStockWarning(e.target.value)}
+                            placeholder="Ej: 5"
+                            min={0}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-small text-text-secondary mb-1 block">
+                            Crítico (Rojo)
+                        </label>
+                        <Input
+                            type="number"
+                            value={minStockCritical}
+                            onChange={(e) => setMinStockCritical(e.target.value)}
+                            placeholder="Ej: 1"
+                            min={0}
                         />
                     </div>
                 </div>

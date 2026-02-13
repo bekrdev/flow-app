@@ -180,54 +180,65 @@ export function InventoryPage() {
                     />
                 ) : (
                     <div className="space-y-3">
-                        {filteredItems.map((item) => (
-                            <div key={item.id} className="item-card animate-fade-in">
-                                {/* Quantity Badge */}
-                                <div className="item-card-quantity">
-                                    {item.quantity}
-                                </div>
+                        {filteredItems.map((item) => {
+                            // Determine status color
+                            let quantityClass = 'bg-surface-tertiary text-text-secondary' // Default (Green/Neutral)
 
-                                {/* Content */}
-                                <div className="item-card-content">
-                                    <div className="item-card-name">{item.name}</div>
-                                    <div className="item-card-meta">
-                                        {[item.category, item.location].filter(Boolean).join(' · ') || 'Sin categoría'}
+                            if (item.minStockCritical !== undefined && item.quantity <= item.minStockCritical) {
+                                quantityClass = 'bg-red-500/10 text-red-500 border border-red-500/20' // Critical
+                            } else if (item.minStockWarning !== undefined && item.quantity <= item.minStockWarning) {
+                                quantityClass = 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' // Warning
+                            }
+
+                            return (
+                                <div key={item.id} className="item-card animate-fade-in">
+                                    {/* Quantity Badge */}
+                                    <div className={`item-card-quantity ${quantityClass} transition-colors duration-300`}>
+                                        {item.quantity}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="item-card-content">
+                                        <div className="item-card-name">{item.name}</div>
+                                        <div className="item-card-meta">
+                                            {[item.category, item.location].filter(Boolean).join(' · ') || 'Sin categoría'}
+                                        </div>
+                                    </div>
+
+                                    {/* Quick Actions */}
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => adjustQuantity(item, -1)}
+                                            className="btn-icon btn-ghost"
+                                            aria-label="Restar 1"
+                                        >
+                                            <Minus size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => adjustQuantity(item, 1)}
+                                            className="btn-icon btn-ghost text-accent"
+                                            aria-label="Sumar 1"
+                                        >
+                                            <Plus size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleEdit(item)}
+                                            className="btn-icon btn-ghost"
+                                            aria-label="Editar"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(item)}
+                                            className="btn-icon btn-ghost text-danger"
+                                            aria-label="Eliminar"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </div>
-
-                                {/* Quick Actions */}
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={() => adjustQuantity(item, -1)}
-                                        className="btn-icon btn-ghost"
-                                        aria-label="Restar 1"
-                                    >
-                                        <Minus size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => adjustQuantity(item, 1)}
-                                        className="btn-icon btn-ghost text-accent"
-                                        aria-label="Sumar 1"
-                                    >
-                                        <Plus size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleEdit(item)}
-                                        className="btn-icon btn-ghost"
-                                        aria-label="Editar"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(item)}
-                                        className="btn-icon btn-ghost text-danger"
-                                        aria-label="Eliminar"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )}
             </div>

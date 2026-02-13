@@ -10,6 +10,8 @@ export interface Item {
     quantity: number
     category?: string
     location?: string
+    minStockWarning?: number
+    minStockCritical?: number
     notes?: string
     createdAt: string
     updatedAt: string

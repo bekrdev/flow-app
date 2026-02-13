@@ -63,6 +63,7 @@ export const useStore = create<AppState>()(
                 items: [
                     {
                         ...item,
+                        minStockCritical: item.minStockCritical ?? 1,
                         id: generateId(),
                         createdAt: now(),
                         updatedAt: now()
@@ -197,6 +198,8 @@ export const useStore = create<AppState>()(
                         quantity: (item.quantity as number) || 0,
                         category: inventoryMap.get(item.inventoryId as string) || (item.category as string),
                         location: item.location as string,
+                        minStockWarning: (item.minStockWarning as number) || undefined,
+                        minStockCritical: (item.minStockCritical as number) || 1,
                         notes: item.notes as string,
                         createdAt: item.createdAt as string || now(),
                         updatedAt: item.updatedAt as string || now()
